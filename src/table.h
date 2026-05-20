@@ -9,6 +9,12 @@
 #define TABLE_MAX_ROWS          (ROWS_PER_PAGE * TABLE_MAX_PAGES)
 
 typedef struct {
+    size_t rows_count;
+    char   _[128];                      // reserved for future metadata
+} TableHeader;
+
+typedef struct {
+    int     fd;
     size_t  rows_count;
     Pager  *pager;
 } Table;
