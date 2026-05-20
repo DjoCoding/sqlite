@@ -32,7 +32,7 @@ ExecutorResult __int__executor_exec_insert(Executor *self, InsertStatement inser
     void *ptr = table_alloc_row_slot(self->table);
     if(ptr == NULL) {
         char buffer[1024] = {0};
-        sprintf(buffer, "failed to allocate row in table.");
+        sprintf(buffer, "Error: Table full.");
 
         char *error = malloc(strlen(buffer) + 1);
         if(error == NULL) return (ExecutorResult) {.ok=false};

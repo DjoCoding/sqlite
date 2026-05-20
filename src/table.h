@@ -3,8 +3,8 @@
 
 #include "row.h"
 
-#define TABLE_MAX_PAGES         (100)
-#define PAGE_SIZE               (4  * 1024) 
+#define TABLE_MAX_PAGES         100
+#define PAGE_SIZE               (4 * 1024) 
 #define ROWS_PER_PAGE           (PAGE_SIZE / sizeof(Row))
 #define TABLE_MAX_ROWS          (ROWS_PER_PAGE * TABLE_MAX_PAGES)
 
