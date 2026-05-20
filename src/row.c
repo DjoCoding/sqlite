@@ -1,4 +1,6 @@
 #include <string.h>
+
+#include "types.h"
 #include "table.h"
 
 Row row_init(int id, StringView username, StringView email) {
@@ -15,8 +17,8 @@ Row row_init_from_raw(RawRow raw) {
     return row_init(raw.id, raw.username, raw.email);
 }
 
-size_t row_serialize(Row self, char *buffer) {
-    size_t offset = 0;
+usize row_serialize(Row self, char *buffer) {
+    usize offset = 0;
 
     memcpy(buffer + offset, &self.id, sizeof(self.id));
     offset += sizeof(self.id);
@@ -32,7 +34,7 @@ size_t row_serialize(Row self, char *buffer) {
 
 
 Row row_from_bytes(char *buffer) {
-    size_t offset = 0;
+    usize offset = 0;
 
     int id = 0;
     memcpy(&id, buffer + offset, sizeof(id));

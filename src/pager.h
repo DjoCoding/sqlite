@@ -8,15 +8,15 @@
 
 typedef struct {
     int     fd;
-    size_t  skip;
-    size_t  pages_count;
+    usize  skip;
+    usize  pages_count;
     void   *pages[PAGER_MAX_PAGES];
 } Pager;
 
-Pager *pager_create(int fd, size_t skip);
-void  *pager_read(Pager *self, size_t index);
+Pager *pager_create(int fd, usize skip);
+void  *pager_read(Pager *self, usize index);
 void  *pager_alloc(Pager *self);
-void   pager_flush(Pager *self, size_t index);
+void   pager_flush(Pager *self, usize index);
 void   pager_free(Pager *self);
 
 #endif // PAGER_H_

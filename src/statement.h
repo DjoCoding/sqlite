@@ -27,8 +27,8 @@ typedef struct {
 
 typedef struct {
     Statement *items;
-    size_t     len;
-    size_t     size;
+    usize     len;
+    usize     size;
 } StatementList;
 
 

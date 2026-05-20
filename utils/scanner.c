@@ -25,7 +25,7 @@ char *scanner_read(Scanner *self) {
         self->buffer = NULL;
     }
     
-    ssize_t read = getline(&self->buffer, &self->buffer_length, stdin);
+    isize read = getline(&self->buffer, &self->buffer_length, stdin);
     if(read <= 0) {
         perror("failed to read from stdin");
         exit(1);

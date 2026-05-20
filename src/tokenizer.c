@@ -17,7 +17,7 @@ TokenizerResult __int__tokenizer_result_ok(TokenList tokens) {
 }
 
 TokenizerResult __int__tokenizer_result_error(char *buffer) {
-    size_t len = strlen(buffer);
+    usize len = strlen(buffer);
     char *error = calloc(1, sizeof(char) * (len + 1));
     memcpy(error, buffer, len);
     return (TokenizerResult) {
@@ -46,7 +46,7 @@ StringView __int__tokenizer_split(Tokenizer *self) {
 bool __int__tokenizer_is_int(Tokenizer *self, StringView candidate) {
     (void)self;
     
-    for(size_t i = 0; i < candidate.len; ++i) {
+    for(usize i = 0; i < candidate.len; ++i) {
         if(!isdigit(candidate.data[i])) return false;    
     }
     return true;

@@ -1,8 +1,9 @@
 #ifndef TOKEN_H_
 #define TOKEN_H_
 
-#include <stdio.h>
 #include <sv.h>
+
+#include "types.h"
 
 typedef enum {
     TOK_KIND_INVALID = 0,
@@ -19,8 +20,8 @@ typedef struct {
 
 typedef struct {
     Token *items;
-    size_t len;
-    size_t size;
+    usize len;
+    usize size;
 } TokenList;
 
 void token_to_string(Token token, char *buffer);

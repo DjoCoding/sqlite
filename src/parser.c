@@ -3,6 +3,7 @@
 #include <array.h>
 #include <string.h>
 
+#include "types.h"
 #include "parser.h"
 
 #define PARSER_ERROR_BUFFER_SIZE 1024
@@ -15,7 +16,7 @@ ParserResult __int__parser_result_ok(StatementList list) {
 }
 
 ParserResult __int__parser_result_error(char *buffer) {
-    size_t len = strlen(buffer);
+    usize len = strlen(buffer);
     char *error = calloc(1, sizeof(char) * (len + 1));
     memcpy(error, buffer, len);
 
@@ -60,7 +61,7 @@ int __int__parser_parse_integer(Parser *self, StringView sv) {
     (void)self;
 
     int x = 0;
-    for(size_t i = 0; i < sv.len; ++i) {
+    for(usize i = 0; i < sv.len; ++i) {
         x *= 10;
         x += sv.data[i] - '0';
     }

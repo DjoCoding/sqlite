@@ -1,5 +1,6 @@
 #include <array.h>
 
+#include "types.h"
 #include "engine.h"
 
 Engine *engine_create(Table *table) {

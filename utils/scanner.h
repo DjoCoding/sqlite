@@ -2,11 +2,12 @@
 #define SCANNER_H_
 
 #include <stdio.h>
+#include "../src/types.h"
 
 typedef struct {
     char    *buffer;
-    size_t   buffer_length;
-    size_t   input_length;
+    usize   buffer_length;
+    usize   input_length;
 } Scanner;
 
 Scanner *scanner_create();

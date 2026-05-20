@@ -1,12 +1,13 @@
 #ifndef CURSOR_H_
 #define CURSOR_H_
 
+#include "types.h"
 #include "table.h"
 
 typedef struct {
     Table   *table;
-    size_t  page_index;
-    size_t  cell_index;
+    usize  page_index;
+    usize  cell_index;
     bool    end;    
 } Cursor;
 

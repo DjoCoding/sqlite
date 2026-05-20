@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "types.h"
 #include "validator.h"
 
-bool __int__vstring_max(StringView value, size_t len) {
+bool __int__vstring_max(StringView value, usize len) {
     return value.len <= len;
 }
 
@@ -31,7 +32,7 @@ ValidatorResult validator_result_ok() {
     return (ValidatorResult) {.ok=true};
 }
 
-ValidatorResult validator_result_error(char *buffer, size_t len) {
+ValidatorResult validator_result_error(char *buffer, usize len) {
     char *error = malloc(len + 1);
     if(error == NULL) {
         perror("failed to malloc buffer");

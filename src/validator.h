@@ -12,7 +12,7 @@ typedef struct {
 
 typedef struct {
     struct {
-        bool (*max)(StringView value, size_t len);
+        bool (*max)(StringView value, usize len);
     } string;
 
 
@@ -24,6 +24,6 @@ typedef struct {
 
 Validator       validator_init();
 ValidatorResult validator_result_ok();
-ValidatorResult validator_result_error(char *buffer, size_t len);
+ValidatorResult validator_result_error(char *buffer, usize len);
 
 #endif // VALIDATOR_H_

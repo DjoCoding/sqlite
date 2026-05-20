@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "types.h"
 #include "table.h"
 
 static inline bool __int__table_has_free_slots(Table *self);
@@ -16,7 +17,7 @@ Table *table_open(const char *filename) {
         exit(1);
     }
 
-    ssize_t len = lseek(fd, 0, SEEK_END);
+    isize len = lseek(fd, 0, SEEK_END);
     if(len < 0) {
         perror("failed to seek to table file");
         exit(1);
@@ -33,7 +34,7 @@ Table *table_open(const char *filename) {
     if(len == 0) {
         TableHeader header = {.rows_count=0, .root_page_index=0, .last_page_index=0, .pages_count=0};
 
-        ssize_t bytes_written = write(fd, &header, sizeof(header));
+        isize bytes_written = write(fd, &header, sizeof(header));
         if(bytes_written < 0) {
             perror("failed to write table file header");
             exit(1);
@@ -48,7 +49,7 @@ Table *table_open(const char *filename) {
         return self;
     }
 
-    if((size_t)len < sizeof(TableHeader)) {
+    if((usize)len < sizeof(TableHeader)) {
         fprintf(stderr, "Error: corrupted table file.");
         exit(1);
     }
@@ -60,7 +61,7 @@ Table *table_open(const char *filename) {
     
     TableHeader header = {0};
 
-    ssize_t bytes_read = read(fd, &header, sizeof(header));
+    isize bytes_read = read(fd, &header, sizeof(header));
     if(bytes_read < 0) {
         perror("failed to read table file header");
         exit(1);
@@ -71,7 +72,7 @@ Table *table_open(const char *filename) {
     self->last_page_index = header.last_page_index;
     self->pages_count = header.pages_count;
     
-    size_t max_rows_count = self->pages_count * ROWS_PER_PAGE;
+    usize max_rows_count = self->pages_count * ROWS_PER_PAGE;
 
     if(self->rows_count > max_rows_count) {
         fprintf(stderr, "Error: invalid table file header.");
@@ -101,9 +102,9 @@ void *table_alloc_row_slot(Table *self) {
     return page;
 }
 
-void *table_get_row_slot(Table *self, size_t page_index, size_t row_index) {
+void *table_get_row_slot(Table *self, usize page_index, usize row_index) {
     assert(page_index < PAGER_MAX_PAGES);
-    size_t offset = row_index * sizeof(Row);
+    usize offset = row_index * sizeof(Row);
     void *page = pager_read(self->pager, page_index);
     return page + offset;
 }
@@ -121,7 +122,7 @@ void table_close(Table *self) {
         exit(1);
     }
     
-    ssize_t bytes_written = write(self->fd, &header, sizeof(header));
+    isize bytes_written = write(self->fd, &header, sizeof(header));
     if(bytes_written < 0) {
         perror("failed to write table file header");
         exit(1);
