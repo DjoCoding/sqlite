@@ -23,3 +23,7 @@ MetaCommand metacmd_lookup_command(StringView cmd) {
     }
     return META_CMD_UNRECOGNIZED;
 }
+
+void metacmd_exit(Table *table) {
+    table_close(table);
+}

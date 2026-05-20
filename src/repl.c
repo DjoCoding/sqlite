@@ -13,9 +13,18 @@
 #include "meta.h"
 #include "engine.h"
 
-int main(void) {
+int main(int argc, char **argv) {
+    if(argc < 2) {
+        fprintf(stderr, "Error: expected table filename argument\n.");
+        return 1;
+    }
+
+    char *filename = argv[1];
+    
+    Table *table = table_open(filename);
+
     Scanner *scanner = scanner_create();
-    Engine *engine = engine_create();
+    Engine *engine = engine_create(table);
     
     bool running = true;
     while(running) {
@@ -30,6 +39,7 @@ int main(void) {
             MetaCommand meta = metacmd_lookup_command(cmd);
             switch(meta) {
                 case META_CMD_EXIT: {
+                    metacmd_exit(table);
                     running = false;
                     break;
                 }

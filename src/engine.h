@@ -11,7 +11,7 @@ typedef struct {
     Executor    *executor;
 } Engine;
 
-Engine *engine_create();
+Engine *engine_create(Table *table);
 bool    engine_execute(Engine *self, StringView cmd);
 void    engine_free(Engine *self);
 

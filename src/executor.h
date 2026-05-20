@@ -6,8 +6,8 @@
 #include "validator.h"
 
 typedef struct {
-    Validator validator;
-    Table *table;
+    Validator   validator;
+    Table       *table;
 } Executor;
 
 typedef struct {
@@ -17,7 +17,7 @@ typedef struct {
     } as;
 } ExecutorResult;
 
-Executor        *executor_create();
+Executor        *executor_create(Table *table);
 ExecutorResult  executor_exec(Executor *self, Statement statement);
 void            executor_free(Executor *self);
 

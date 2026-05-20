@@ -2,20 +2,26 @@
 #define TABLE_H_
 
 #include "row.h"
+#include "pager.h"
 
-#define TABLE_MAX_PAGES         100
-#define PAGE_SIZE               (4 * 1024) 
+#define TABLE_MAX_PAGES         PAGER_MAX_PAGES
 #define ROWS_PER_PAGE           (PAGE_SIZE / sizeof(Row))
 #define TABLE_MAX_ROWS          (ROWS_PER_PAGE * TABLE_MAX_PAGES)
 
 typedef struct {
     size_t  rows_count;
-    void   *pages[TABLE_MAX_PAGES];
+    Pager  *pager;
 } Table;
 
-Table *table_create();
+typedef struct {
+    Table *table;
+    size_t index;
+    bool   end;
+} TableIterator;
+
+Table *table_open(const char *filename);
 void  *table_alloc_row_slot(Table *self);
 void  *table_get_row_slot(Table *self, size_t index);
-void   table_free(Table *self);
+void   table_close(Table *self);
 
 #endif // TABLE_H_

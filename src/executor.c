@@ -2,17 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cursor.h"
+
 #include "executor.h"
 
-Executor *executor_create() {
+Executor *executor_create(Table *table) {
     Executor *self = malloc(sizeof(*self));
-    if(self == NULL) {
+    if(self == NULL) { 
         perror("failed to malloc Executor");
         exit(1);
     }
 
     self->validator = validator_init();
-    self->table = table_create();
+    self->table     = table;
 
     return self;
 }
@@ -20,11 +22,14 @@ Executor *executor_create() {
 ExecutorResult __int__executor_exec_select(Executor *self, SelectStatement select) {
     (void)select;
 
-    for(size_t i = 0; i < self->table->rows_count; ++i) {
-        void *bytes = table_get_row_slot(self->table, i);
+    Cursor *cursor = cursor_create_at_start(self->table);
+    while(!cursor->end) {
+        void *bytes = cursor_get_value(cursor);
         Row row = row_from_bytes(bytes);
         fprintf(stdout, "Row(%d, \"%.*s\", \"%.*s\")\n", row.id, ROW_USERNAME_SIZE, row.username, ROW_EMAIL_SIZE, row.email);
+        cursor_move(cursor);
     }
+    cursor_free(cursor);
     
     return (ExecutorResult) {.ok=true};
 }
@@ -72,8 +77,11 @@ ExecutorResult __int__executor_exec_insert(Executor *self, InsertStatement inser
         return (ExecutorResult){.ok=false, .as.error=vresult.as.error};
     }
 
-    void *ptr = table_alloc_row_slot(self->table);
-    if(ptr == NULL) {
+    Cursor *cursor = cursor_create_at_end(self->table);
+    void *slot     = cursor_get_value(cursor);
+    cursor_free(cursor);
+
+    if(slot == NULL) {
         char buffer[1024] = {0};
         sprintf(buffer, "Error: Table full.");
 
@@ -88,7 +96,7 @@ ExecutorResult __int__executor_exec_insert(Executor *self, InsertStatement inser
     }
 
     Row row = row_init_from_raw(raw_row);
-    row_serialize(row, ptr);
+    row_serialize(row, slot);
 
     return (ExecutorResult) {.ok=true};
 }
@@ -110,7 +118,6 @@ ExecutorResult executor_exec(Executor *self, Statement statement) {
 
 
 void executor_free(Executor *self) {
-    table_free(self->table);
     free(self);
 }
 

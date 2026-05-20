@@ -2,7 +2,7 @@
 
 #include "engine.h"
 
-Engine *engine_create() {
+Engine *engine_create(Table *table) {
     Engine *self = malloc(sizeof(*self));
     if(self == NULL) {
         perror("failed to malloc Engine");
@@ -11,7 +11,7 @@ Engine *engine_create() {
 
     self->tokenizer = tokenizer_create();
     self->parser    = parser_create();
-    self->executor  = executor_create();
+    self->executor  = executor_create(table);
 
     return self;
 }
