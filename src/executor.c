@@ -78,12 +78,12 @@ ExecutorResult __int__executor_exec_insert(Executor *self, InsertStatement inser
     }
 
     Cursor *cursor = cursor_create_at_end(self->table);
-    void *slot     = cursor_get_value(cursor);
+    void   *slot   = cursor_get_value(cursor);
     cursor_free(cursor);
 
     if(slot == NULL) {
         char buffer[1024] = {0};
-        sprintf(buffer, "Error: Table full.");
+        sprintf(buffer, "Error: Could not allocate space for row.");
 
         char *error = malloc(strlen(buffer) + 1);
         if(error == NULL) return (ExecutorResult) {.ok=false};

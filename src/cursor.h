@@ -5,7 +5,8 @@
 
 typedef struct {
     Table   *table;
-    size_t  index;
+    size_t  page_index;
+    size_t  cell_index;
     bool    end;    
 } Cursor;
 

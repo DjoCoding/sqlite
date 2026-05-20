@@ -31,7 +31,7 @@ Table *table_open(const char *filename) {
     self->fd = fd;
 
     if(len == 0) {
-        TableHeader header = {.rows_count=0};
+        TableHeader header = {.rows_count=0, .root_page_index=0, .last_page_index=0, .pages_count=0};
 
         ssize_t bytes_written = write(fd, &header, sizeof(header));
         if(bytes_written < 0) {
@@ -41,6 +41,9 @@ Table *table_open(const char *filename) {
 
         self->pager = pager_create(fd, sizeof(TableHeader));
         self->rows_count = 0;
+        self->root_page_index = 0;
+        self->last_page_index = 0;
+        self->pages_count = 0;
 
         return self;
     }
@@ -64,11 +67,13 @@ Table *table_open(const char *filename) {
     }
 
     self->rows_count = header.rows_count;
+    self->root_page_index = header.root_page_index;
+    self->last_page_index = header.last_page_index;
+    self->pages_count = header.pages_count;
     
-    size_t data_len = len - sizeof(header);
-    size_t estimated_rows_count = data_len / sizeof(Row);
+    size_t max_rows_count = self->pages_count * ROWS_PER_PAGE;
 
-    if(self->rows_count > estimated_rows_count) {
+    if(self->rows_count > max_rows_count) {
         fprintf(stderr, "Error: invalid table file header.");
         exit(1);
     }
@@ -78,30 +83,37 @@ Table *table_open(const char *filename) {
 }
 
 static inline bool __int__table_has_free_slots(Table *self) {
-    return self->rows_count < TABLE_MAX_ROWS;
+    return (self->pages_count * ROWS_PER_PAGE - self->rows_count) > 0;
 }
 
 void *table_alloc_row_slot(Table *self) {
-    if(!__int__table_has_free_slots(self)) return NULL;
-    void *ptr = table_get_row_slot(self, self->rows_count);
-    self->rows_count += 1;
-    return ptr;
+    if(__int__table_has_free_slots(self)) {
+        void *slot = table_get_row_slot(self, self->last_page_index, self->rows_count % ROWS_PER_PAGE); 
+        self->rows_count += 1;
+        return slot;
+    }
+    
+    void *page = pager_alloc(self->pager);
+    self->rows_count  += 1;
+    self->pages_count += 1;
+    self->last_page_index = self->pager->pages_count - 1;
+
+    return page;
 }
 
-void *table_get_row_slot(Table *self, size_t index) {
-    size_t page_index           = index / ROWS_PER_PAGE;
-    size_t row_offset_in_page   = index - page_index * ROWS_PER_PAGE;
-    size_t offset               = row_offset_in_page * sizeof(Row);
-
+void *table_get_row_slot(Table *self, size_t page_index, size_t row_index) {
     assert(page_index < PAGER_MAX_PAGES);
-
+    size_t offset = row_index * sizeof(Row);
     void *page = pager_read(self->pager, page_index);
     return page + offset;
 }
 
 void table_close(Table *self) {
     TableHeader header = {
-        .rows_count = self->rows_count
+        .rows_count = self->rows_count,
+        .root_page_index = self->root_page_index,
+        .last_page_index = self->last_page_index,
+        .pages_count = self->pages_count
     };
     
     if(lseek(self->fd, 0, SEEK_SET) < 0) {

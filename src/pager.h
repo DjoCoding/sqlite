@@ -3,13 +3,13 @@
 
 #include <stdio.h>
 
-#define PAGER_MAX_PAGES         100
+#define PAGER_MAX_PAGES         200
 #define PAGE_SIZE               (4 * 1024) 
 
 typedef struct {
     int     fd;
-    size_t  len;
     size_t  skip;
+    size_t  pages_count;
     void   *pages[PAGER_MAX_PAGES];
 } Pager;
 

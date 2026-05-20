@@ -7,6 +7,12 @@
 
 #include "pager.h"
 
+/**
+ * Pager: responsible of caching pages and allocating new pages on demand
+ * pager_alloc: allocate a new page at the end of the file
+ * pager_read:  read an existing page within the file
+ */
+ 
 // skip: header size skipped
 Pager *pager_create(int fd, size_t skip) {
     ssize_t len = lseek(fd, 0, SEEK_END);
@@ -23,16 +29,18 @@ Pager *pager_create(int fd, size_t skip) {
         exit(1);
     }
 
+    memset(self->pages, 0, sizeof(self->pages));
+    
     self->fd    = fd;
     self->skip  = skip;
-    self->len   = len - skip;
-    memset(self->pages, 0, sizeof(self->pages));
+
+    self->pages_count = (len - skip) / PAGE_SIZE;
+    if(((size_t)len - skip) % PAGE_SIZE != 0) {
+        fprintf(stderr, "Error: corrupted table file.");
+        exit(1);
+    }
 
     return self;
-}
-
-static inline size_t __int__pager_get_pages_count(Pager *self) {
-    return self->len / PAGE_SIZE;
 }
 
 static inline off_t __int__pager_seek_start(Pager *self, size_t offset) {
@@ -44,10 +52,7 @@ static inline off_t __int__pager_seek_end(Pager *self, size_t offset) {
 }
 
 void *pager_read(Pager *self, size_t index) {
-    size_t pages_count = __int__pager_get_pages_count(self);
-    assert(index <= pages_count);
-
-    if(index == pages_count) return pager_alloc(self);
+    assert(index < self->pages_count);
     
     if(self->pages[index] != NULL) return self->pages[index];
     
@@ -69,9 +74,8 @@ void *pager_read(Pager *self, size_t index) {
 }
 
 void *pager_alloc(Pager *self) {
-    size_t pages_count = __int__pager_get_pages_count(self);
-    if(pages_count >= PAGER_MAX_PAGES) return NULL;
-    
+    assert(self->pages_count < PAGER_MAX_PAGES);
+
     void *buffer = malloc(PAGE_SIZE);
     if(buffer == NULL) {
         perror("failed to malloc page buffer");
@@ -81,17 +85,15 @@ void *pager_alloc(Pager *self) {
 
     __int__pager_seek_end(self, 0);
     write(self->fd, buffer, PAGE_SIZE);
-    off_t len = __int__pager_seek_end(self, 0);
+    
+    self->pages[self->pages_count] = buffer;
+    self->pages_count += 1;
 
-    self->len = len - self->skip;
-    self->pages[pages_count] = buffer;
-
-    return self->pages[pages_count];
+    return self->pages[self->pages_count - 1];
 }
 
 void pager_flush(Pager *self, size_t index) {
-    size_t pages_count = __int__pager_get_pages_count(self);
-    assert(index < pages_count);
+    assert(index < self->pages_count);
     assert(self->pages[index] != NULL);
 
     __int__pager_seek_start(self, index * PAGE_SIZE);
@@ -103,7 +105,7 @@ void pager_flush(Pager *self, size_t index) {
 }
 
 void pager_free(Pager *self) {
-    for(size_t i = 0; i < PAGER_MAX_PAGES; ++i) {
+    for(size_t i = 0; i < self->pages_count; ++i) {
         if(self->pages[i] == NULL) continue;
         pager_flush(self, i);
         free(self->pages[i]);
