@@ -131,8 +131,13 @@ Statement __int__parser_parse_insert(Parser *self) {
         return (Statement){.type=STAT_TYPE_INVALID};
     }
 
-    Row row = row_init(id, username, email);
-    return (Statement){
+    RawRow row = {
+        .id = id,
+        .username = username,
+        .email = email
+    };
+
+    return (Statement) {
         .type = STAT_TYPE_INSERT,
         .as.insert = {
             .row = row

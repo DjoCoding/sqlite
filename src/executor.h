@@ -3,10 +3,10 @@
 
 #include "parser.h"
 #include "table.h"
-
+#include "validator.h"
 
 typedef struct {
-    char _;
+    Validator validator;
     Table *table;
 } Executor;
 

@@ -10,7 +10,7 @@ typedef enum {
 } StatementType;
 
 typedef struct {
-    Row row;
+    RawRow row;
 } InsertStatement;
 
 typedef struct {

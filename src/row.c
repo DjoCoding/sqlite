@@ -11,6 +11,10 @@ Row row_init(int id, StringView username, StringView email) {
     return row;
 }
 
+Row row_init_from_raw(RawRow raw) {
+    return row_init(raw.id, raw.username, raw.email);
+}
+
 size_t row_serialize(Row self, char *buffer) {
     size_t offset = 0;
 
@@ -33,7 +37,6 @@ Row row_from_bytes(char *buffer) {
     int id = 0;
     memcpy(&id, buffer + offset, sizeof(id));
     offset += sizeof(id);
-
 
     char username[ROW_USERNAME_SIZE] = {0};
     memcpy(username, buffer + offset, sizeof(username));
