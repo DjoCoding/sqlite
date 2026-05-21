@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include "cursor.h"
-
+#include "node.h"
 #include "executor.h"
 
 Executor *executor_create(Table *table) {
@@ -24,8 +24,12 @@ ExecutorResult __int__executor_exec_select(Executor *self, SelectStatement selec
 
     Cursor *cursor = cursor_create_at_start(self->table);
     while(!cursor->end) {
-        void *bytes = cursor_get_value(cursor);
-        Row row = row_from_bytes(bytes);
+        void *bytes   = cursor_get_value(cursor);
+        LeafCell cell = leaf_cell_deserialize(bytes);
+        
+        void *raw     = cell.raw;
+        Row   row     = row_from_bytes(raw);
+        
         fprintf(stdout, "Row(%d, \"%.*s\", \"%.*s\")\n", row.id, ROW_USERNAME_SIZE, row.username, ROW_EMAIL_SIZE, row.email);
         cursor_move(cursor);
     }
@@ -77,13 +81,23 @@ ExecutorResult __int__executor_exec_insert(Executor *self, InsertStatement inser
         return (ExecutorResult){.ok=false, .as.error=vresult.as.error};
     }
 
-    Cursor *cursor = cursor_create_at_end(self->table);
-    void   *slot   = cursor_get_value(cursor);
-    cursor_free(cursor);
+    Row row = row_init_from_raw(raw_row);
 
-    if(slot == NULL) {
+    Page  root_page = pager_read(self->table->pager, self->table->root_page_index); 
+    Node  root      = node_deserialize(root_page);
+
+    Node node = root;
+    while(node.kind != NODE_KIND_LEAF) {
+        // make the traversal
+    }
+
+    Page leaf_page = pager_read(self->table->pager, node.page_id);
+    LeafNode leaf  = leaf_node_deserialize(leaf_page.ptr);
+    int result     = leaf_node_insert(&leaf, row.id, row);
+
+    if(result == LEAF_NODE_INSERT_RESULT_KEY_EXISTS) {
         char buffer[1024] = {0};
-        sprintf(buffer, "Error: Could not allocate space for row.");
+        sprintf(buffer, "Error: key %d already exists in table.", row.id);
 
         char *error = malloc(strlen(buffer) + 1);
         if(error == NULL) return (ExecutorResult) {.ok=false};
@@ -95,9 +109,10 @@ ExecutorResult __int__executor_exec_insert(Executor *self, InsertStatement inser
         };
     }
 
-    Row row = row_init_from_raw(raw_row);
-    row_serialize(row, slot);
+    leaf_node_serialize(leaf, leaf_page.ptr);
+    self->table->rows_count += 1;
 
+    assert(result == LEAF_NODE_INSERT_RESULT_SUCCESS);
     return (ExecutorResult) {.ok=true};
 }
 

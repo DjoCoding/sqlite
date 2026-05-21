@@ -52,10 +52,10 @@ static inline off_t __int__pager_seek_end(Pager *self, usize offset) {
     return lseek(self->fd, offset, SEEK_END);
 }
 
-void *pager_read(Pager *self, usize index) {
+Page pager_read(Pager *self, usize index) {
     assert(index < self->pages_count);
     
-    if(self->pages[index] != NULL) return self->pages[index];
+    if(self->pages[index] != NULL) return (Page) {.id = index, .ptr = self->pages[index]};
     
     void *buffer = malloc(PAGE_SIZE);
     if(buffer == NULL) {
@@ -71,10 +71,10 @@ void *pager_read(Pager *self, usize index) {
     }
 
     self->pages[index] = buffer;
-    return self->pages[index];
+    return (Page) {.id=index, .ptr=self->pages[index]};
 }
 
-void *pager_alloc(Pager *self) {
+Page pager_alloc(Pager *self) {
     assert(self->pages_count < PAGER_MAX_PAGES);
 
     void *buffer = malloc(PAGE_SIZE);
@@ -90,7 +90,7 @@ void *pager_alloc(Pager *self) {
     self->pages[self->pages_count] = buffer;
     self->pages_count += 1;
 
-    return self->pages[self->pages_count - 1];
+    return (Page) {.id=self->pages_count-1, .ptr=self->pages[self->pages_count-1]};
 }
 
 void pager_flush(Pager *self, usize index) {

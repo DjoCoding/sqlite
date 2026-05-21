@@ -19,7 +19,7 @@ typedef struct {
 } RawRow;
 
 Row     row_init_from_raw(RawRow raw);
-usize  row_serialize(Row self, char *buffer);
+void    row_serialize(Row self, char *buffer);
 Row     row_from_bytes(char *buffer);
 
 #endif // ROW_H_

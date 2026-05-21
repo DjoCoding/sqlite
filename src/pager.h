@@ -13,9 +13,14 @@ typedef struct {
     void   *pages[PAGER_MAX_PAGES];
 } Pager;
 
+typedef struct { 
+    usize  id;
+    void  *ptr;
+} Page;
+
 Pager *pager_create(int fd, usize skip);
-void  *pager_read(Pager *self, usize index);
-void  *pager_alloc(Pager *self);
+Page   pager_read(Pager *self, usize index);
+Page   pager_alloc(Pager *self);
 void   pager_flush(Pager *self, usize index);
 void   pager_free(Pager *self);
 

@@ -3,6 +3,8 @@
 #include "types.h"
 #include "table.h"
 
+#include "row.h"
+
 Row row_init(int id, StringView username, StringView email) {
     Row row = {0};
 
@@ -17,36 +19,13 @@ Row row_init_from_raw(RawRow raw) {
     return row_init(raw.id, raw.username, raw.email);
 }
 
-usize row_serialize(Row self, char *buffer) {
-    usize offset = 0;
-
-    memcpy(buffer + offset, &self.id, sizeof(self.id));
-    offset += sizeof(self.id);
-
-    memcpy(buffer + offset, self.username, sizeof(self.username));
-    offset += sizeof(self.username);
-
-    memcpy(buffer + offset, self.email, sizeof(self.email));
-    offset += sizeof(self.email);
-
-    return offset;
+void row_serialize(Row self, char *buffer) {
+    memcpy(buffer, &self, sizeof(Row));
 }
 
 
 Row row_from_bytes(char *buffer) {
-    usize offset = 0;
-
-    int id = 0;
-    memcpy(&id, buffer + offset, sizeof(id));
-    offset += sizeof(id);
-
-    char username[ROW_USERNAME_SIZE] = {0};
-    memcpy(username, buffer + offset, sizeof(username));
-    offset += sizeof(username);
-
-    char email[ROW_EMAIL_SIZE] = {0};
-    memcpy(email, buffer + offset, sizeof(email));
-    offset += sizeof(email);
-
-    return row_init(id, sv_from_cstr(username), sv_from_cstr(email));
+    Row self = {0};
+    memcpy(&self, buffer, sizeof(Row));
+    return self;
 }

@@ -23,12 +23,12 @@ typedef enum {
  
 typedef struct {
     u8      kind;
-    u8      is_root;
-    usize   parent_page_index;
+    u8      isroot;
+    usize   parent_id;
 } NodeHeader;
 
-
-NodeHeader node_header_init_from_bytes(void *ptr);
+NodeHeader  node_header_deserialize(void *ptr);
+void        node_header_serialize(NodeHeader self, void *ptr);
 
 #define LEAF_NODE_CELLS_COUNT_SIZE      sizeof(usize)
 #define LEAF_NODE_CELLS_COUNT_OFFSET    NODE_HEADER_SIZE
@@ -36,11 +36,9 @@ NodeHeader node_header_init_from_bytes(void *ptr);
 #define LEAF_NODE_HEADER_SIZE           (NODE_HEADER_SIZE + LEAF_NODE_CELLS_COUNT_SIZE)
 
 typedef struct {
-    NodeHeader header;
+    NodeHeader common_header;
     size_t     cells_count;
 } LeafNodeHeader;
-
-LeafNodeHeader leaf_node_header_init_from_bytes(void *ptr);
 
 #define LEAF_NODE_KEY_SIZE              sizeof(usize)
 #define LEAF_NODE_KEY_OFFSET            0
@@ -58,11 +56,44 @@ typedef struct {
     void       *raw;
 } LeafCell;
 
+LeafCell leaf_cell_deserialize(void *ptr);
+
 typedef struct {
-    LeafNodeHeader header;
+    LeafNodeHeader leaf_header;
     LeafCell       cells[LEAF_NODE_MAX_CELLS_COUNT];
 } LeafNode;
 
-LeafNode leaf_node_init_from_bytes(void *ptr);
+LeafNode leaf_node_deserialize(void *ptr);
+void     leaf_node_serialize(LeafNode self, void *ptr);
+
+typedef enum {
+    LEAF_NODE_INSERT_RESULT_SUCCESS = 0,
+    LEAF_NODE_INSERT_RESULT_KEY_EXISTS,
+} LeafNodeInsertResult;
+
+int leaf_node_insert(LeafNode *self, usize key, Row row);
+
+// Generic node that has is all self contained
+typedef struct {
+    NodeKind        kind;
+    bool            isroot;
+    usize           parent_id;
+    usize           page_id;
+    union {
+        struct {
+            LeafCell cells[LEAF_NODE_MAX_CELLS_COUNT];
+            usize    count;
+        } leaf;
+
+        struct {
+            char _;
+        } internal;
+    } as;
+} Node;
+
+// Smart deserializer that deserializes the data given in ptr to a generic node
+Node node_deserialize(Page page);
+
+// void node_serialize(Node self, void *ptr);
 
 #endif // NODE_H_

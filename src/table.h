@@ -32,7 +32,6 @@ typedef struct {
 
 Table *table_open(const char *filename);
 void  *table_alloc_row_slot(Table *self);
-void  *table_get_row_slot(Table *self, usize page_index, usize row_index);
 void   table_close(Table *self);
 
 #endif // TABLE_H_

@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "types.h"
+#include "node.h"
 #include "table.h"
 
 static inline bool __int__table_has_free_slots(Table *self);
@@ -46,6 +47,24 @@ Table *table_open(const char *filename) {
         self->last_page_index = 0;
         self->pages_count = 0;
 
+        LeafNode root_node = {
+            .leaf_header = {
+                .cells_count = 0,
+                .common_header = {
+                    .isroot = true,
+                    .kind   = NODE_KIND_LEAF,
+                }
+            }
+        };
+
+        Page page = pager_alloc(self->pager);
+        usize page_id = self->pager->pages_count - 1;
+        leaf_node_serialize(root_node, page.ptr);
+        pager_flush(self->pager, page_id);
+
+        self->pages_count += 1;
+        self->last_page_index = page_id;
+        
         return self;
     }
 
@@ -87,6 +106,8 @@ static inline bool __int__table_has_free_slots(Table *self) {
     return (self->pages_count * ROWS_PER_PAGE - self->rows_count) > 0;
 }
 
+void *table_get_row_slot(Table *self, usize page_index, usize row_index);
+
 void *table_alloc_row_slot(Table *self) {
     if(__int__table_has_free_slots(self)) {
         void *slot = table_get_row_slot(self, self->last_page_index, self->rows_count % ROWS_PER_PAGE); 
@@ -94,19 +115,19 @@ void *table_alloc_row_slot(Table *self) {
         return slot;
     }
     
-    void *page = pager_alloc(self->pager);
+    Page page = pager_alloc(self->pager);
     self->rows_count  += 1;
     self->pages_count += 1;
     self->last_page_index = self->pager->pages_count - 1;
 
-    return page;
+    return page.ptr;
 }
 
 void *table_get_row_slot(Table *self, usize page_index, usize row_index) {
     assert(page_index < PAGER_MAX_PAGES);
     usize offset = row_index * sizeof(Row);
-    void *page = pager_read(self->pager, page_index);
-    return page + offset;
+    Page page = pager_read(self->pager, page_index);
+    return page.ptr + offset;
 }
 
 void table_close(Table *self) {
