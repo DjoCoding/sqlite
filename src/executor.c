@@ -24,13 +24,15 @@ ExecutorResult __int__executor_exec_select(Executor *self, SelectStatement selec
 
     Cursor *cursor = cursor_create_at_start(self->table);
     while(!cursor->end) {
-        void *bytes   = cursor_get_value(cursor);
-        LeafCell cell = leaf_cell_deserialize(bytes);
+        void *bytes    = cursor_get_value(cursor);
+        LeafCell *cell = leaf_cell_deserialize(bytes);
         
-        void *raw     = cell.raw;
+        void *raw     = cell->raw;
         Row   row     = row_from_bytes(raw);
-        
+
         fprintf(stdout, "Row(%d, \"%.*s\", \"%.*s\")\n", row.id, ROW_USERNAME_SIZE, row.username, ROW_EMAIL_SIZE, row.email);
+        
+        leaf_cell_free(cell);
         cursor_move(cursor);
     }
     cursor_free(cursor);
@@ -45,13 +47,6 @@ ValidatorResult __int__executor_validate(Executor *self, RawRow row) {
     if(!isvalid) {
         char buffer[1024] = {0};
         sprintf(buffer, "Error: invalid id value id=%d, expected to be > 1.", row.id);
-        return validator_result_error(buffer, strlen(buffer));        
-    }
-
-    isvalid = self->validator.integer.max(row.id, 4);
-    if(!isvalid) {
-        char buffer[1024] = {0};
-        sprintf(buffer, "Error: invalid id value id=%d, expected to be <= 4.", row.id);
         return validator_result_error(buffer, strlen(buffer));        
     }
 
@@ -91,17 +86,23 @@ ExecutorResult __int__executor_exec_insert(Executor *self, InsertStatement inser
         // make the traversal
     }
 
-    Page leaf_page = pager_read(self->table->pager, node.page_id);
-    LeafNode leaf  = leaf_node_deserialize(leaf_page.ptr);
-    int result     = leaf_node_insert(&leaf, row.id, row);
+    Page     leaf_page = pager_read(self->table->pager, node.page_id);
+    LeafNode *leaf     = leaf_node_deserialize(leaf_page.ptr);
+    int      result    = leaf_node_insert(leaf, row.id, row);
 
     if(result == LEAF_NODE_INSERT_RESULT_KEY_EXISTS) {
+        leaf_node_free(leaf);
+
         char buffer[1024] = {0};
         sprintf(buffer, "Error: key %d already exists in table.", row.id);
 
-        char *error = malloc(strlen(buffer) + 1);
+        usize buflen = strlen(buffer);
+        
+        char *error = malloc(buflen + 1);
         if(error == NULL) return (ExecutorResult) {.ok=false};
-        memcpy(error, buffer, strlen(buffer));
+        
+        memcpy(error, buffer, buflen);
+        error[strlen(buffer)] = 0;
 
         return (ExecutorResult) {
             .ok = false,

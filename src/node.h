@@ -56,15 +56,17 @@ typedef struct {
     void       *raw;
 } LeafCell;
 
-LeafCell leaf_cell_deserialize(void *ptr);
+LeafCell *leaf_cell_deserialize(void *ptr);
+void leaf_cell_free(LeafCell *self);
 
 typedef struct {
     LeafNodeHeader leaf_header;
-    LeafCell       cells[LEAF_NODE_MAX_CELLS_COUNT];
+    LeafCell      *cells[LEAF_NODE_MAX_CELLS_COUNT];
 } LeafNode;
 
-LeafNode leaf_node_deserialize(void *ptr);
-void     leaf_node_serialize(LeafNode self, void *ptr);
+LeafNode *leaf_node_deserialize(void *ptr);
+void      leaf_node_serialize(LeafNode *self, void *ptr);
+void      leaf_node_free(LeafNode *self);
 
 typedef enum {
     LEAF_NODE_INSERT_RESULT_SUCCESS = 0,
@@ -74,6 +76,8 @@ typedef enum {
 int leaf_node_insert(LeafNode *self, usize key, Row row);
 
 // Generic node that has is all self contained
+// A structure meant to be READONLY
+// It doesn't care about the actual data, just the keys
 typedef struct {
     NodeKind        kind;
     bool            isroot;
@@ -81,7 +85,7 @@ typedef struct {
     usize           page_id;
     union {
         struct {
-            LeafCell cells[LEAF_NODE_MAX_CELLS_COUNT];
+            usize    keys[LEAF_NODE_MAX_CELLS_COUNT];  // KEYS
             usize    count;
         } leaf;
 

@@ -59,7 +59,7 @@ Table *table_open(const char *filename) {
 
         Page page = pager_alloc(self->pager);
         usize page_id = self->pager->pages_count - 1;
-        leaf_node_serialize(root_node, page.ptr);
+        leaf_node_serialize(&root_node, page.ptr);
         pager_flush(self->pager, page_id);
 
         self->pages_count += 1;
